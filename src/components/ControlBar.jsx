@@ -1,94 +1,175 @@
-import { Play, Square, Pause, RotateCcw, Mic, MicOff, Video } from 'lucide-react';
+/**
+ * ControlBar — the signature glassmorphism element.
+ * This is the ONE place we use the glass-panel class.
+ * Framer Motion animates the state transition (idle → recording).
+ * Keyboard hints are shown inline next to buttons.
+ */
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Square, Pause, RotateCcw, Mic, MicOff } from 'lucide-react';
 
-const STATES = { IDLE: 'idle', RECORDING: 'recording', PAUSED: 'paused', STOPPED: 'stopped' };
+const btn = {
+  base: {
+    display: 'flex', alignItems: 'center', gap: '6px',
+    borderRadius: '5px', fontSize: '12px', fontWeight: 500,
+    padding: '6px 12px', cursor: 'pointer',
+    transition: 'background 0.12s ease, border-color 0.12s ease, transform 0.1s ease',
+    userSelect: 'none', border: '1px solid transparent',
+  },
+  primary: {
+    background: '#2563eb',
+    border: '1px solid #1d4ed8',
+    color: '#fff',
+  },
+  ghost: {
+    background: 'transparent',
+    border: '1px solid var(--color-border-default)',
+    color: 'var(--color-text-secondary)',
+  },
+  danger: {
+    background: 'rgba(239,68,68,0.12)',
+    border: '1px solid rgba(239,68,68,0.3)',
+    color: '#f87171',
+  },
+  muted: {
+    background: 'rgba(239,68,68,0.12)',
+    border: '1px solid rgba(239,68,68,0.25)',
+    color: '#f87171',
+  },
+};
+
+const fadeSwap = {
+  initial: { opacity: 0, y: 4, scale: 0.98 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: 'easeOut' } },
+  exit:    { opacity: 0, y: -4, scale: 0.98, transition: { duration: 0.15 } },
+};
 
 export default function ControlBar({
-  recordingState,
-  onStart,
-  onPause,
-  onResume,
-  onStop,
-  onMute,
-  isMuted,
-  recordingMode,
+  recordingState, onStart, onPause, onResume, onStop,
+  onMute, isMuted, recordingMode,
 }) {
-  const isIdle = recordingState === STATES.IDLE;
-  const isRecording = recordingState === STATES.RECORDING;
-  const isPaused = recordingState === STATES.PAUSED;
+  const isIdle      = recordingState === 'idle';
+  const isRecording = recordingState === 'recording';
+  const isPaused    = recordingState === 'paused';
 
   return (
-    <div className="w-full flex items-center justify-center">
-      <div className="flex items-center gap-3 bg-gray-900/70 backdrop-blur-xl border border-white/8 rounded-2xl px-6 py-4 shadow-2xl shadow-black/50">
+    /* ONE glass-panel usage */
+    <div
+      className="glass-panel"
+      style={{
+        borderRadius: '10px',
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        width: '100%',
+      }}
+    >
+      <AnimatePresence mode="wait" initial={false}>
 
-        {/* START button */}
+        {/* ── IDLE ──────────────────────────────────────── */}
         {isIdle && (
-          <button
-            onClick={onStart}
-            className="group flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400 text-white font-semibold text-sm transition-all duration-200 shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 active:scale-95"
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-white/90 group-hover:animate-pulse" />
-            Start Recording
-          </button>
+          <motion.div key="idle" {...fadeSwap} className="flex items-center gap-3 w-full">
+            <button
+              id="btn-start"
+              onClick={onStart}
+              style={{ ...btn.base, ...btn.primary }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <span
+                className="w-2 h-2 rounded-full bg-white/80 flex-shrink-0"
+                style={{ boxShadow: '0 0 0 0 rgba(255,255,255,0.4)' }}
+              />
+              Start Capture
+            </button>
+            <kbd>Space</kbd>
+            <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>
+              to begin
+            </span>
+          </motion.div>
         )}
 
-        {/* PAUSE / RESUME */}
+        {/* ── RECORDING / PAUSED ────────────────────────── */}
         {(isRecording || isPaused) && (
-          <>
+          <motion.div key="active" {...fadeSwap} className="flex items-center gap-2 w-full flex-wrap">
+
+            {/* Pause / Resume */}
             <button
+              id={isPaused ? 'btn-resume' : 'btn-pause'}
               onClick={isPaused ? onResume : onPause}
-              title={isPaused ? 'Resume' : 'Pause'}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-700/80 hover:bg-gray-600/80 text-white text-sm font-medium border border-white/5 transition-all duration-150 hover:scale-105 active:scale-95"
+              style={{
+                ...btn.base,
+                ...(isPaused ? btn.primary : btn.ghost),
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-strong)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = isPaused ? '#1d4ed8' : 'var(--color-border-default)'; }}
             >
               {isPaused
-                ? <><Play className="w-4 h-4 text-emerald-400" /> Resume</>
-                : <><Pause className="w-4 h-4 text-yellow-400" /> Pause</>
+                ? <><RotateCcw size={13} strokeWidth={2} /> Resume</>
+                : <><Pause size={13} strokeWidth={2} /> Pause</>
               }
             </button>
+            <kbd>{isPaused ? 'R' : 'P'}</kbd>
 
-            {/* STOP */}
+            <div style={{ width: '1px', height: '20px', background: 'var(--color-border-default)', margin: '0 4px' }} />
+
+            {/* Stop */}
             <button
+              id="btn-stop"
               onClick={onStop}
-              title="Stop Recording"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-500 text-white text-sm font-semibold border border-red-500/40 transition-all duration-150 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/20"
+              style={{ ...btn.base, ...btn.danger }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              <Square className="w-4 h-4 fill-white" />
+              <Square size={12} fill="currentColor" strokeWidth={0} />
               Stop
             </button>
+            <kbd>S</kbd>
 
-            {/* Divider */}
-            <div className="w-px h-8 bg-white/10" />
-
-            {/* MUTE toggle */}
+            {/* Mute — only when audio mode */}
             {recordingMode !== 'screen-only' && (
-              <button
-                onClick={onMute}
-                title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all duration-150 hover:scale-105 active:scale-95
-                  ${isMuted
-                    ? 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30'
-                    : 'bg-gray-700/60 border-white/5 text-gray-300 hover:bg-gray-600/60'
-                  }`}
-              >
-                {isMuted
-                  ? <><MicOff className="w-4 h-4" /> Unmute</>
-                  : <><Mic className="w-4 h-4 text-emerald-400" /> Mute</>
-                }
-              </button>
+              <>
+                <div style={{ width: '1px', height: '20px', background: 'var(--color-border-default)', margin: '0 4px' }} />
+                <button
+                  id="btn-mute"
+                  onClick={onMute}
+                  style={{
+                    ...btn.base,
+                    ...(isMuted ? btn.muted : btn.ghost),
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-strong)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = isMuted ? 'rgba(239,68,68,0.25)' : 'var(--color-border-default)'; }}
+                >
+                  {isMuted
+                    ? <><MicOff size={13} strokeWidth={2} /> Unmute</>
+                    : <><Mic size={13} strokeWidth={2} /> Mic</>
+                  }
+                </button>
+                <kbd>M</kbd>
+              </>
             )}
 
-            {/* Recording pulse badge */}
-            {isRecording && (
-              <div className="flex items-center gap-1.5 ml-1">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-                </span>
-                <span className="text-xs font-bold text-red-400 tracking-widest">REC</span>
-              </div>
-            )}
-          </>
+            {/* Spacer + REC label */}
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {isRecording && (
+                <span className="rec-dot w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+              )}
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  letterSpacing: '0.1em',
+                  color: isRecording ? 'var(--color-rec)' : '#f59e0b',
+                  fontWeight: 600,
+                }}
+              >
+                {isRecording ? 'REC' : 'PAUSED'}
+              </span>
+            </div>
+          </motion.div>
         )}
-      </div>
+
+      </AnimatePresence>
     </div>
   );
 }

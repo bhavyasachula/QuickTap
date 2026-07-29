@@ -1,3 +1,7 @@
+/**
+ * AudioVisualizer — minimal 32-bar canvas meter.
+ * Tight, dense, no glow. Colors: blue peaks, gray flat, white clip.
+ */
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 
@@ -5,8 +9,8 @@ const BAR_COUNT = 32;
 
 export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
   const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-  const [avgLevel, setAvgLevel] = useState(0);
+  const rafRef    = useRef(null);
+  const [level, setLevel] = useState(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -15,96 +19,110 @@ export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
 
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw);
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
 
       const analyser = analyserRef.current;
-      const width = canvas.width;
-      const height = canvas.height;
-      ctx.clearRect(0, 0, width, height);
+      const active   = analyser && isRecording && !isMuted;
 
-      if (!analyser || !isRecording || isMuted) {
-        // Draw flat idle bars
-        const barW = (width / BAR_COUNT) * 0.6;
-        const gap = (width / BAR_COUNT) * 0.4;
+      const barW   = (W / BAR_COUNT) * 0.55;
+      const gapW   = (W / BAR_COUNT) * 0.45;
+      const slot   = W / BAR_COUNT;
+
+      if (!active) {
+        // Flat idle bars
         for (let i = 0; i < BAR_COUNT; i++) {
-          const x = i * (width / BAR_COUNT) + gap / 2;
-          ctx.fillStyle = 'rgba(255,255,255,0.06)';
+          ctx.fillStyle = 'rgba(255,255,255,0.05)';
+          const x = i * slot + gapW / 2;
           ctx.beginPath();
-          ctx.roundRect(x, height / 2 - 2, barW, 4, 2);
+          ctx.roundRect(x, H / 2 - 1.5, barW, 3, 1);
           ctx.fill();
         }
-        setAvgLevel(0);
+        setLevel(0);
         return;
       }
 
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(dataArray);
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(data);
 
-      const slice = Math.floor(dataArray.length / BAR_COUNT);
-      let total = 0;
+      const slice = Math.floor(data.length / BAR_COUNT);
+      let sum = 0;
 
       for (let i = 0; i < BAR_COUNT; i++) {
-        let sum = 0;
-        for (let j = 0; j < slice; j++) sum += dataArray[i * slice + j];
-        const avg = sum / slice;
-        total += avg;
+        let s = 0;
+        for (let j = 0; j < slice; j++) s += data[i * slice + j];
+        const avg  = s / slice;
+        sum += avg;
+        const pct  = avg / 255;
+        const barH = Math.max(3, pct * H * 0.9);
+        const x    = i * slot + gapW / 2;
+        const y    = (H - barH) / 2;
 
-        const normalizedH = (avg / 255) * height * 0.85;
-        const barH = Math.max(4, normalizedH);
-        const barW = (width / BAR_COUNT) * 0.6;
-        const gap = (width / BAR_COUNT) * 0.4;
-        const x = i * (width / BAR_COUNT) + gap / 2;
-        const y = (height - barH) / 2;
+        // Color by level: blue → gray → white
+        let color;
+        if (pct < 0.5)       color = `rgba(37,99,235,${0.4 + pct * 0.9})`;
+        else if (pct < 0.85) color = `rgba(148,163,184,${0.6 + pct * 0.4})`;
+        else                 color = `rgba(241,245,249,${0.85 + pct * 0.15})`;
 
-        // Gradient color based on level
-        const intensity = avg / 255;
-        const r = Math.round(139 + intensity * 116);
-        const g = Math.round(92 + intensity * (-92));
-        const b = Math.round(246 - intensity * 100);
-
-        ctx.fillStyle = `rgba(${r},${g},${b},${0.5 + intensity * 0.5})`;
+        ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.roundRect(x, y, barW, barH, 2);
+        ctx.roundRect(x, y, barW, barH, 1.5);
         ctx.fill();
       }
 
-      setAvgLevel(Math.round((total / BAR_COUNT / 255) * 100));
+      setLevel(Math.round((sum / BAR_COUNT / 255) * 100));
     };
 
     draw();
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [analyserRef, isRecording, isMuted]);
 
   return (
-    <div className="w-full flex items-center gap-4 bg-gray-900/50 border border-white/5 rounded-xl px-4 py-3">
-      <div className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center
-        ${isMuted ? 'bg-red-500/20' : 'bg-violet-500/20'}`}
-      >
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        background: 'var(--color-surface-raised)',
+        border: '1px solid var(--color-border-subtle)',
+        borderRadius: '6px',
+        padding: '8px 12px',
+      }}
+    >
+      {/* Icon */}
+      <div style={{ flexShrink: 0 }}>
         {isMuted
-          ? <MicOff className="w-3.5 h-3.5 text-red-400" />
-          : <Mic className="w-3.5 h-3.5 text-violet-400" />
+          ? <MicOff size={13} strokeWidth={1.75} style={{ color: '#f87171' }} />
+          : <Mic size={13} strokeWidth={1.75} style={{ color: 'var(--color-text-secondary)' }} />
         }
       </div>
 
-      <div className="flex-1 relative">
-        <canvas
-          ref={canvasRef}
-          width={600}
-          height={48}
-          className="w-full h-10 rounded-lg"
-        />
+      {/* Bars */}
+      <div style={{ flex: 1, position: 'relative', height: '32px' }}>
+        <canvas ref={canvasRef} width={560} height={32} style={{ width: '100%', height: '32px', display: 'block' }} />
         {isMuted && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs text-red-400/70 font-medium">Microphone muted</span>
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center',
+              fontSize: '11px', color: 'var(--color-text-tertiary)',
+            }}
+          >
+            Microphone muted
           </div>
         )}
       </div>
 
-      <div className="flex-shrink-0 text-right">
-        <div className="text-xs text-gray-500 font-medium">Level</div>
-        <div className={`text-sm font-bold tabular-nums ${avgLevel > 70 ? 'text-red-400' : avgLevel > 40 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-          {avgLevel}%
+      {/* Level readout */}
+      <div style={{ flexShrink: 0, textAlign: 'right' }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: level > 75 ? '#f87171' : level > 45 ? '#fbbf24' : 'var(--color-text-secondary)',
+            minWidth: '28px',
+          }}
+        >
+          {level}%
         </div>
       </div>
     </div>
