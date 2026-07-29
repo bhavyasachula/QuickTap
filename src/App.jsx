@@ -1,5 +1,21 @@
+/**
+ * App — root layout.
+ *
+ * Structure:
+ *  <Header />   — sticky nav
+ *  <section>    — hero: ParticleField behind, recorder UI in front (zIndex 10)
+ *    <ParticleField />
+ *    <div zIndex 10>
+ *      headline + recorder widget
+ *    </div>
+ *  </section>
+ *
+ * Recorder widget is the hero — front and center, not buried.
+ * No generic marketing copy, no emoji headings.
+ */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
+import ParticleField from './components/ParticleField';
 import ModeSelector from './components/ModeSelector';
 import VideoPreview from './components/VideoPreview';
 import ControlBar from './components/ControlBar';
@@ -7,68 +23,57 @@ import Telemetry from './components/Telemetry';
 import AudioVisualizer from './components/AudioVisualizer';
 import PostRecording from './components/PostRecording';
 
-const RECORDING_STATES = {
-  IDLE: 'idle',
-  RECORDING: 'recording',
-  PAUSED: 'paused',
-  STOPPED: 'stopped',
-};
+const RS = { IDLE: 'idle', RECORDING: 'recording', PAUSED: 'paused', STOPPED: 'stopped' };
 
 export default function App() {
-  const [recordingState, setRecordingState] = useState(RECORDING_STATES.IDLE);
-  const [recordingMode, setRecordingMode] = useState('screen-audio');
-  const [isMuted, setIsMuted] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [recordedBlob, setRecordedBlob] = useState(null);
-  const [recordedUrl, setRecordedUrl] = useState(null);
-  const [error, setError] = useState(null);
+  const [recordingState, setRecordingState] = useState(RS.IDLE);
+  const [recordingMode, setRecordingMode]   = useState('screen-audio');
+  const [isMuted, setIsMuted]               = useState(false);
+  const [duration, setDuration]             = useState(0);
+  const [recordedBlob, setRecordedBlob]     = useState(null);
+  const [recordedUrl, setRecordedUrl]       = useState(null);
+  const [error, setError]                   = useState(null);
 
-  const streamRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
-  const timerRef = useRef(null);
-  const previewRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
-  const micStreamRef = useRef(null);
+  const streamRef       = useRef(null);
+  const mediaRecRef     = useRef(null);
+  const chunksRef       = useRef([]);
+  const timerRef        = useRef(null);
+  const previewRef      = useRef(null);
+  const audioCtxRef     = useRef(null);
+  const analyserRef     = useRef(null);
+  const micStreamRef    = useRef(null);
 
+  // ── Timer helpers ────────────────────────────────────────
   const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
 
   const startTimer = useCallback(() => {
     clearTimer();
-    timerRef.current = setInterval(() => {
-      setDuration((d) => d + 1);
-    }, 1000);
+    timerRef.current = setInterval(() => setDuration(d => d + 1), 1000);
   }, [clearTimer]);
 
   const stopAllTracks = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    micStreamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    micStreamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
     micStreamRef.current = null;
   }, []);
 
-  const setupAudioAnalyser = useCallback((stream) => {
+  const setupAnalyser = useCallback(stream => {
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx     = new AC();
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
-      const source = ctx.createMediaStreamSource(stream);
-      source.connect(analyser);
-      audioContextRef.current = ctx;
-      analyserRef.current = analyser;
-    } catch (e) {
-      console.warn('Audio analyser setup failed', e);
-    }
+      ctx.createMediaStreamSource(stream).connect(analyser);
+      audioCtxRef.current  = ctx;
+      analyserRef.current  = analyser;
+    } catch (e) { console.warn('Analyser setup failed', e); }
   }, []);
 
+  // ── Start ────────────────────────────────────────────────
   const handleStart = useCallback(async () => {
     setError(null);
     chunksRef.current = [];
@@ -77,8 +82,7 @@ export default function App() {
     setDuration(0);
 
     try {
-      let stream;
-      let micStream;
+      let stream, micStream;
 
       if (recordingMode === 'camera') {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -86,226 +90,310 @@ export default function App() {
           audio: true,
         });
       } else {
-        const displayConstraints = {
+        stream = await navigator.mediaDevices.getDisplayMedia({
           video: { frameRate: { ideal: 30 }, width: { ideal: 1920 }, height: { ideal: 1080 } },
           audio: recordingMode === 'screen-audio',
-        };
-        stream = await navigator.mediaDevices.getDisplayMedia(displayConstraints);
-
+        });
         if (recordingMode === 'screen-audio') {
           try {
             micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             micStreamRef.current = micStream;
-          } catch {
-            // Mic optional
-          }
+          } catch { /* optional */ }
         }
       }
 
       streamRef.current = stream;
 
-      // Combine display + mic audio tracks if both exist
       let finalStream = stream;
       if (micStream) {
-        const ctx = new AudioContext();
+        const ctx  = new AudioContext();
         const dest = ctx.createMediaStreamDestination();
-        const dispAudio = stream.getAudioTracks();
-        const micAudio = micStream.getAudioTracks();
-
-        if (dispAudio.length > 0) {
-          ctx.createMediaStreamSource(new MediaStream(dispAudio)).connect(dest);
+        const da   = stream.getAudioTracks();
+        const ma   = micStream.getAudioTracks();
+        if (da.length) ctx.createMediaStreamSource(new MediaStream(da)).connect(dest);
+        if (ma.length) {
+          ctx.createMediaStreamSource(new MediaStream(ma)).connect(dest);
+          setupAnalyser(new MediaStream(ma));
         }
-        if (micAudio.length > 0) {
-          ctx.createMediaStreamSource(new MediaStream(micAudio)).connect(dest);
-          setupAudioAnalyser(new MediaStream(micAudio));
-        }
-
-        finalStream = new MediaStream([
-          ...stream.getVideoTracks(),
-          ...dest.stream.getAudioTracks(),
-        ]);
+        finalStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
       } else {
-        const audioTracks = stream.getAudioTracks();
-        if (audioTracks.length > 0) {
-          setupAudioAnalyser(new MediaStream(audioTracks));
-        }
+        const at = stream.getAudioTracks();
+        if (at.length) setupAnalyser(new MediaStream(at));
       }
 
-      // Live preview
-      if (previewRef.current) {
-        previewRef.current.srcObject = stream;
-        previewRef.current.muted = true;
-      }
+      if (previewRef.current) { previewRef.current.srcObject = stream; previewRef.current.muted = true; }
 
-      // Determine supported mime type
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
         ? 'video/webm;codecs=vp9'
-        : MediaRecorder.isTypeSupported('video/webm')
-        ? 'video/webm'
-        : '';
+        : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '';
 
       const recorder = new MediaRecorder(finalStream, mimeType ? { mimeType } : {});
-      mediaRecorderRef.current = recorder;
+      mediaRecRef.current = recorder;
 
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
+      recorder.ondataavailable = e => { if (e.data?.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
+        const url  = URL.createObjectURL(blob);
         setRecordedBlob(blob);
         setRecordedUrl(url);
-        setRecordingState(RECORDING_STATES.STOPPED);
+        setRecordingState(RS.STOPPED);
         if (previewRef.current) previewRef.current.srcObject = null;
-        audioContextRef.current?.close();
-        audioContextRef.current = null;
+        audioCtxRef.current?.close();
+        audioCtxRef.current = null;
         analyserRef.current = null;
       };
 
-      // Handle native "Stop Sharing"
-      stream.getVideoTracks()[0].addEventListener('ended', () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-          clearTimer();
-          mediaRecorderRef.current.stop();
-          stopAllTracks();
+      stream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') {
+          clearTimer(); mediaRecRef.current.stop(); stopAllTracks();
         }
       });
 
       recorder.start(100);
-      setRecordingState(RECORDING_STATES.RECORDING);
+      setRecordingState(RS.RECORDING);
       startTimer();
     } catch (err) {
       console.error(err);
-      setError(err.name === 'NotAllowedError' ? 'Permission denied. Please allow screen/camera access.' : err.message);
+      setError(err.name === 'NotAllowedError'
+        ? 'Permission denied — allow screen/camera access and try again.'
+        : err.message);
     }
-  }, [recordingMode, setupAudioAnalyser, startTimer, clearTimer, stopAllTracks]);
+  }, [recordingMode, setupAnalyser, startTimer, clearTimer, stopAllTracks]);
 
   const handlePause = useCallback(() => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.pause();
-      clearTimer();
-      setRecordingState(RECORDING_STATES.PAUSED);
+    if (mediaRecRef.current?.state === 'recording') {
+      mediaRecRef.current.pause(); clearTimer(); setRecordingState(RS.PAUSED);
     }
   }, [clearTimer]);
 
   const handleResume = useCallback(() => {
-    if (mediaRecorderRef.current?.state === 'paused') {
-      mediaRecorderRef.current.resume();
-      startTimer();
-      setRecordingState(RECORDING_STATES.RECORDING);
+    if (mediaRecRef.current?.state === 'paused') {
+      mediaRecRef.current.resume(); startTimer(); setRecordingState(RS.RECORDING);
     }
   }, [startTimer]);
 
   const handleStop = useCallback(() => {
     clearTimer();
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
+    if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') mediaRecRef.current.stop();
     stopAllTracks();
   }, [clearTimer, stopAllTracks]);
 
   const handleMute = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getAudioTracks().forEach((t) => {
-        t.enabled = isMuted;
-      });
-    }
-    if (micStreamRef.current) {
-      micStreamRef.current.getAudioTracks().forEach((t) => {
-        t.enabled = isMuted;
-      });
-    }
-    setIsMuted((m) => !m);
+    const enable = isMuted; // toggling: if currently muted, we enable
+    streamRef.current?.getAudioTracks().forEach(t => { t.enabled = enable; });
+    micStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = enable; });
+    setIsMuted(m => !m);
   }, [isMuted]);
 
   const handleDiscard = useCallback(() => {
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
-    setRecordedBlob(null);
-    setRecordedUrl(null);
-    setRecordingState(RECORDING_STATES.IDLE);
-    setDuration(0);
+    setRecordedBlob(null); setRecordedUrl(null);
+    setRecordingState(RS.IDLE); setDuration(0);
   }, [recordedUrl]);
 
+  // Keyboard shortcuts
   useEffect(() => {
-    return () => {
-      clearTimer();
-      stopAllTracks();
-      if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+    const onKey = e => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.code === 'Space' && recordingState === RS.IDLE) { e.preventDefault(); handleStart(); }
+      if (e.key === 'p' || e.key === 'P') {
+        if (recordingState === RS.RECORDING) handlePause();
+        if (recordingState === RS.PAUSED)    handleResume();
+      }
+      if ((e.key === 's' || e.key === 'S') && (recordingState === RS.RECORDING || recordingState === RS.PAUSED)) handleStop();
+      if ((e.key === 'm' || e.key === 'M') && (recordingState === RS.RECORDING || recordingState === RS.PAUSED)) handleMute();
     };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [recordingState, handleStart, handlePause, handleResume, handleStop, handleMute]);
+
+  useEffect(() => () => {
+    clearTimer(); stopAllTracks();
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
   }, [clearTimer, stopAllTracks, recordedUrl]);
 
-  const isIdle = recordingState === RECORDING_STATES.IDLE;
-  const isRecording = recordingState === RECORDING_STATES.RECORDING;
-  const isPaused = recordingState === RECORDING_STATES.PAUSED;
-  const isStopped = recordingState === RECORDING_STATES.STOPPED;
+  const isIdle      = recordingState === RS.IDLE;
+  const isRecording = recordingState === RS.RECORDING;
+  const isPaused    = recordingState === RS.PAUSED;
+  const isStopped   = recordingState === RS.STOPPED;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <Header />
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-surface-base)' }}>
 
-      <main className="flex-1 flex flex-col items-center px-4 py-6 gap-6 max-w-6xl mx-auto w-full">
-        {/* Top row: Mode selector + Telemetry */}
-        <div className="w-full flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <ModeSelector
-            mode={recordingMode}
-            onChange={setRecordingMode}
-            disabled={isRecording || isPaused}
-          />
-          <Telemetry
-            duration={duration}
-            isRecording={isRecording}
-            isPaused={isPaused}
-          />
+      <Header recordingState={recordingState} />
+
+      {/* ── Hero section: particle field behind, recorder in front ── */}
+      <section style={{ position: 'relative', overflow: 'hidden', flex: 1 }}>
+        <ParticleField />
+
+        {/* All recorder content sits at zIndex 10 */}
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <div
+            style={{
+              maxWidth: '860px',
+              margin: '0 auto',
+              padding: '48px 24px 64px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0',
+            }}
+          >
+            {/* ── Page heading — concise, no emoji, no gradient text ── */}
+            {isIdle && (
+              <div style={{ marginBottom: '40px' }}>
+                <h1
+                  style={{
+                    fontSize: 'clamp(28px, 4vw, 42px)',
+                    fontWeight: 700,
+                    letterSpacing: '-0.04em',
+                    color: 'var(--color-text-primary)',
+                    margin: '0 0 10px',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Record your screen.{' '}
+                  <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400 }}>
+                    No extensions needed.
+                  </span>
+                </h1>
+                <p
+                  style={{
+                    fontSize: '14px',
+                    color: 'var(--color-text-secondary)',
+                    margin: 0,
+                    lineHeight: 1.6,
+                    maxWidth: '480px',
+                  }}
+                >
+                  Browser-native WebRTC recording with vp9 encoding.
+                  Capture screen, window, or camera — processed entirely on-device.
+                </p>
+              </div>
+            )}
+
+            {/* ── Main recorder widget ─────────────────────────────── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+              {/* Row: source selector + timer */}
+              {!isStopped && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
+                    gap: '16px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <ModeSelector
+                    mode={recordingMode}
+                    onChange={setRecordingMode}
+                    disabled={isRecording || isPaused}
+                  />
+                  <Telemetry
+                    duration={duration}
+                    isRecording={isRecording}
+                    isPaused={isPaused}
+                  />
+                </div>
+              )}
+
+              {/* Error */}
+              {error && (
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '10px 14px',
+                    background: 'rgba(239,68,68,0.07)',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    color: '#f87171',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style={{ flexShrink: 0 }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9h2v4h-2V9zm0-2h2v2h-2V7z" clipRule="evenodd" />
+                  </svg>
+                  {error}
+                </div>
+              )}
+
+              {/* Video preview or post-recording */}
+              {!isStopped ? (
+                <>
+                  <VideoPreview
+                    previewRef={previewRef}
+                    recordingMode={recordingMode}
+                    isRecording={isRecording}
+                    isPaused={isPaused}
+                    isIdle={isIdle}
+                  />
+                  <AudioVisualizer
+                    analyserRef={analyserRef}
+                    isRecording={isRecording}
+                    isMuted={isMuted}
+                  />
+                </>
+              ) : (
+                <PostRecording
+                  recordedUrl={recordedUrl}
+                  recordedBlob={recordedBlob}
+                  duration={duration}
+                  onDiscard={handleDiscard}
+                />
+              )}
+
+              {/* Control bar — the signature glassmorphism element */}
+              {!isStopped && (
+                <ControlBar
+                  recordingState={recordingState}
+                  onStart={handleStart}
+                  onPause={handlePause}
+                  onResume={handleResume}
+                  onStop={handleStop}
+                  onMute={handleMute}
+                  isMuted={isMuted}
+                  recordingMode={recordingMode}
+                />
+              )}
+
+              {/* Shortcut footer — visible only when idle */}
+              {isIdle && (
+                <div
+                  style={{
+                    marginTop: '4px',
+                    display: 'flex', gap: '16px', flexWrap: 'wrap',
+                    fontSize: '11px', color: 'var(--color-text-tertiary)',
+                  }}
+                >
+                  <span>During recording:</span>
+                  {[['P', 'Pause'], ['S', 'Stop'], ['M', 'Mute']].map(([k, l]) => (
+                    <span key={k} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <kbd>{k}</kbd> {l}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Error banner */}
-        {error && (
-          <div className="w-full bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm flex items-center gap-2">
-            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9h2v4h-2V9zm0-2h2v2h-2V7z" clipRule="evenodd" />
-            </svg>
-            {error}
-          </div>
-        )}
-
-        {/* Main content area */}
-        {!isStopped ? (
-          <div className="w-full flex flex-col gap-4">
-            <VideoPreview
-              previewRef={previewRef}
-              recordingMode={recordingMode}
-              isRecording={isRecording}
-              isPaused={isPaused}
-              isIdle={isIdle}
-            />
-            <AudioVisualizer
-              analyserRef={analyserRef}
-              isRecording={isRecording}
-              isMuted={isMuted}
-            />
-          </div>
-        ) : (
-          <PostRecording
-            recordedUrl={recordedUrl}
-            recordedBlob={recordedBlob}
-            duration={duration}
-            onDiscard={handleDiscard}
-          />
-        )}
-
-        {/* Control Bar */}
-        <ControlBar
-          recordingState={recordingState}
-          onStart={handleStart}
-          onPause={handlePause}
-          onResume={handleResume}
-          onStop={handleStop}
-          onMute={handleMute}
-          isMuted={isMuted}
-          recordingMode={recordingMode}
-        />
-      </main>
+      {/* ── Footer ────────────────────────────────────────────── */}
+      <footer
+        style={{
+          borderTop: '1px solid var(--color-border-subtle)',
+          padding: '14px 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}
+      >
+        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
+          QuickTap — runs entirely in your browser
+        </span>
+        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
+          WebRTC · MediaRecorder · vp9
+        </span>
+      </footer>
     </div>
   );
 }

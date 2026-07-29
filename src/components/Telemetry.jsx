@@ -1,46 +1,51 @@
+/**
+ * Telemetry — clean timer with dot indicator.
+ * Monospace, no badge chips, no heavy backgrounds.
+ */
 import { Clock } from 'lucide-react';
 
-function formatTime(totalSeconds) {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  return [h, m, s].map((v) => String(v).padStart(2, '0')).join(':');
+function fmt(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':');
 }
 
 export default function Telemetry({ duration, isRecording, isPaused }) {
-  const isActive = isRecording || isPaused;
+  const active = isRecording || isPaused;
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300
-      ${isRecording
-        ? 'bg-red-500/10 border-red-500/20 shadow-lg shadow-red-500/5'
-        : isPaused
-        ? 'bg-yellow-500/10 border-yellow-500/20'
-        : 'bg-gray-900/50 border-white/5'
-      }`}
-    >
-      <Clock className={`w-4 h-4 ${isRecording ? 'text-red-400' : isPaused ? 'text-yellow-400' : 'text-gray-600'}`} />
-      <span
-        className={`font-mono text-xl font-bold tabular-nums tracking-widest
-          ${isRecording ? 'text-white' : isPaused ? 'text-yellow-300' : 'text-gray-600'}`}
-      >
-        {formatTime(duration)}
-      </span>
-      {isActive && (
-        <div className="flex items-center gap-1 ml-1">
-          {isRecording ? (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-semibold text-red-400 tracking-widest">LIVE</span>
-            </>
-          ) : (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-              <span className="text-xs font-semibold text-yellow-400 tracking-widest">PAUSED</span>
-            </>
-          )}
-        </div>
+    <div className="flex items-center gap-2.5">
+      {active && (
+        <span
+          className={`w-2 h-2 rounded-full flex-shrink-0 ${
+            isRecording ? 'bg-red-500 rec-dot' : 'bg-amber-400'
+          }`}
+        />
       )}
+      {!active && (
+        <Clock
+          size={14}
+          strokeWidth={1.5}
+          style={{ color: 'var(--color-text-tertiary)' }}
+        />
+      )}
+      <span
+        className="tabular-nums"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '22px',
+          fontWeight: 600,
+          letterSpacing: '-0.03em',
+          color: isRecording
+            ? 'var(--color-text-primary)'
+            : isPaused
+            ? '#f59e0b'
+            : 'var(--color-text-tertiary)',
+        }}
+      >
+        {fmt(duration)}
+      </span>
     </div>
   );
 }
