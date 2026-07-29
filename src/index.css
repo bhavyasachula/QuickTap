@@ -1,60 +1,110 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
-
+/* ── Design tokens ──────────────────────────────────────── */
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-mono: ui-monospace, 'JetBrains Mono', monospace;
 
-  --color-gray-950: #09090b;
-  --color-gray-925: #0d0d10;
-  --color-gray-900: #111114;
+  /* Surface scale */
+  --color-surface-base:   #0d0f14;
+  --color-surface-raised: #13151c;
+  --color-surface-float:  #1a1d26;
+
+  /* Borders */
+  --color-border-default: #252830;
+  --color-border-subtle:  #1e2028;
+  --color-border-strong:  #363944;
+
+  /* Text */
+  --color-text-primary:   #f0f1f5;
+  --color-text-secondary: #7c7f8e;
+  --color-text-tertiary:  #4a4d5a;
+
+  /* Accent — used surgically in 1-2 places */
+  --color-accent: #2563eb;
+  --color-accent-dim: #1d4ed8;
+
+  /* State colors */
+  --color-rec:    #ef4444;
+  --color-rec-bg: rgba(239,68,68,0.08);
+  --color-pause:  #f59e0b;
 }
 
-* {
-  box-sizing: border-box;
-}
+/* ── Base reset ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { height: 100%; }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-gray-950);
-  color: white;
+  background-color: var(--color-surface-base);
+  color: var(--color-text-primary);
   margin: 0;
+  height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 2px; }
 
-/* Pulse ring animation for video preview border */
-@keyframes pulse-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-  70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
-  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+/* ── Rec pulse — the ONE signature animation ────────────── */
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
 }
+.rec-dot { animation: rec-pulse 1.4s ease-in-out infinite; }
 
-.animate-pulse-ring {
-  animation: pulse-ring 2s ease-out infinite;
-}
-
-/* Fade-in for post-recording panel */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+/* ── Fade-slide in ──────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.fade-up { animation: fade-up 0.3s ease forwards; }
 
-.animate-fadeIn {
-  animation: fadeIn 0.4s ease forwards;
+/* ── Glassmorphism panel — ONE element only ─────────────── */
+.glass-panel {
+  background: rgba(19, 21, 28, 0.72);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.07);
 }
 
-/* Canvas background grid */
-.bg-grid {
-  background-image:
-    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* ── Focus ring ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Kbd ────────────────────────────────────────────────── */
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  background: var(--color-surface-float);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.02em;
+}
+
+/* ── Progress bar for post-recording ───────────────────── */
+.seek-bar { cursor: pointer; }
+.seek-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--color-text-primary);
+  cursor: pointer;
+  margin-top: -4px;
+}
+.seek-bar::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--color-border-strong);
+  border-radius: 2px;
 }
