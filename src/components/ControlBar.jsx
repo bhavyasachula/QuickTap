@@ -1,39 +1,35 @@
-/**
- * ControlBar — the signature glassmorphism element.
- * This is the ONE place we use the glass-panel class.
- * Framer Motion animates the state transition (idle → recording).
- * Keyboard hints are shown inline next to buttons.
- */
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Square, Pause, RotateCcw, Mic, MicOff } from 'lucide-react';
 
 const btn = {
   base: {
     display: 'flex', alignItems: 'center', gap: '6px',
-    borderRadius: '5px', fontSize: '12px', fontWeight: 500,
-    padding: '6px 12px', cursor: 'pointer',
-    transition: 'background 0.12s ease, border-color 0.12s ease, transform 0.1s ease',
+    borderRadius: '6px', fontSize: '13px', fontWeight: 600,
+    padding: '8px 14px', cursor: 'pointer',
+    transition: 'all 0.12s ease',
     userSelect: 'none', border: '1px solid transparent',
   },
   primary: {
-    background: '#2563eb',
-    border: '1px solid #1d4ed8',
-    color: '#fff',
+    background: '#0f172a',
+    border: '1px solid #0f172a',
+    color: '#ffffff',
+    boxShadow: '0 2px 4px rgba(15, 23, 42, 0.12)',
   },
   ghost: {
-    background: 'transparent',
-    border: '1px solid var(--color-border-default)',
-    color: 'var(--color-text-secondary)',
+    background: '#ffffff',
+    border: '1px solid #cbd5e1',
+    color: '#334155',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
   },
   danger: {
-    background: 'rgba(239,68,68,0.12)',
-    border: '1px solid rgba(239,68,68,0.3)',
-    color: '#f87171',
+    background: '#fef2f2',
+    border: '1px solid #fca5a5',
+    color: '#dc2626',
   },
   muted: {
-    background: 'rgba(239,68,68,0.12)',
-    border: '1px solid rgba(239,68,68,0.25)',
-    color: '#f87171',
+    background: '#fef2f2',
+    border: '1px solid #fca5a5',
+    color: '#dc2626',
   },
 };
 
@@ -52,15 +48,14 @@ export default function ControlBar({
   const isPaused    = recordingState === 'paused';
 
   return (
-    /* ONE glass-panel usage */
     <div
       className="glass-panel"
       style={{
-        borderRadius: '10px',
-        padding: '12px 16px',
+        borderRadius: '12px',
+        padding: '12px 18px',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
+        gap: '10px',
         width: '100%',
       }}
     >
@@ -73,25 +68,22 @@ export default function ControlBar({
               id="btn-start"
               onClick={onStart}
               style={{ ...btn.base, ...btn.primary }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#0f172a'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              <span
-                className="w-2 h-2 rounded-full bg-white/80 flex-shrink-0"
-                style={{ boxShadow: '0 0 0 0 rgba(255,255,255,0.4)' }}
-              />
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0 animate-pulse" />
               Start Capture
             </button>
             <kbd>Space</kbd>
-            <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>
-              to begin
+            <span style={{ color: '#64748b', fontSize: '12px' }}>
+              to begin recording
             </span>
           </motion.div>
         )}
 
         {/* ── RECORDING / PAUSED ────────────────────────── */}
         {(isRecording || isPaused) && (
-          <motion.div key="active" {...fadeSwap} className="flex items-center gap-2 w-full flex-wrap">
+          <motion.div key="active" {...fadeSwap} className="flex items-center gap-2.5 w-full flex-wrap">
 
             {/* Pause / Resume */}
             <button
@@ -101,35 +93,31 @@ export default function ControlBar({
                 ...btn.base,
                 ...(isPaused ? btn.primary : btn.ghost),
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-strong)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = isPaused ? '#1d4ed8' : 'var(--color-border-default)'; }}
             >
               {isPaused
-                ? <><RotateCcw size={13} strokeWidth={2} /> Resume</>
-                : <><Pause size={13} strokeWidth={2} /> Pause</>
+                ? <><RotateCcw size={14} strokeWidth={2} /> Resume</>
+                : <><Pause size={14} strokeWidth={2} /> Pause</>
               }
             </button>
             <kbd>{isPaused ? 'R' : 'P'}</kbd>
 
-            <div style={{ width: '1px', height: '20px', background: 'var(--color-border-default)', margin: '0 4px' }} />
+            <div style={{ width: '1px', height: '22px', background: '#e2e8f0', margin: '0 4px' }} />
 
             {/* Stop */}
             <button
               id="btn-stop"
               onClick={onStop}
               style={{ ...btn.base, ...btn.danger }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              <Square size={12} fill="currentColor" strokeWidth={0} />
-              Stop
+              <Square size={13} fill="currentColor" strokeWidth={0} />
+              Stop Recording
             </button>
             <kbd>S</kbd>
 
-            {/* Mute — only when audio mode */}
+            {/* Mute */}
             {recordingMode !== 'screen-only' && (
               <>
-                <div style={{ width: '1px', height: '20px', background: 'var(--color-border-default)', margin: '0 4px' }} />
+                <div style={{ width: '1px', height: '22px', background: '#e2e8f0', margin: '0 4px' }} />
                 <button
                   id="btn-mute"
                   onClick={onMute}
@@ -137,33 +125,31 @@ export default function ControlBar({
                     ...btn.base,
                     ...(isMuted ? btn.muted : btn.ghost),
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-strong)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = isMuted ? 'rgba(239,68,68,0.25)' : 'var(--color-border-default)'; }}
                 >
                   {isMuted
-                    ? <><MicOff size={13} strokeWidth={2} /> Unmute</>
-                    : <><Mic size={13} strokeWidth={2} /> Mic</>
+                    ? <><MicOff size={14} strokeWidth={2} /> Unmute</>
+                    : <><Mic size={14} strokeWidth={2} /> Mic</>
                   }
                 </button>
                 <kbd>M</kbd>
               </>
             )}
 
-            {/* Spacer + REC label */}
+            {/* REC indicator */}
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
               {isRecording && (
-                <span className="rec-dot w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                <span className="rec-dot w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
               )}
               <span
                 style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '10px',
-                  letterSpacing: '0.1em',
-                  color: isRecording ? 'var(--color-rec)' : '#f59e0b',
-                  fontWeight: 600,
+                  fontSize: '11px',
+                  letterSpacing: '0.08em',
+                  color: isRecording ? '#ef4444' : '#d97706',
+                  fontWeight: 700,
                 }}
               >
-                {isRecording ? 'REC' : 'PAUSED'}
+                {isRecording ? 'LIVE' : 'PAUSED'}
               </span>
             </div>
           </motion.div>
