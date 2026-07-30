@@ -1,14 +1,10 @@
-/**
- * Telemetry — clean timer with dot indicator.
- * Monospace, no badge chips, no heavy backgrounds.
- */
 import { Clock } from 'lucide-react';
 
 function fmt(s) {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':');
+  return [h, m, sec].map((v) => String(v).padStart(2, '0')).join(':');
 }
 
 export default function Telemetry({ duration, isRecording, isPaused }) {
@@ -16,32 +12,31 @@ export default function Telemetry({ duration, isRecording, isPaused }) {
 
   return (
     <div className="flex items-center gap-2.5">
-      {active && (
+      {active ? (
         <span
-          className={`w-2 h-2 rounded-full flex-shrink-0 ${
-            isRecording ? 'bg-red-500 rec-dot' : 'bg-amber-400'
+          className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+            isRecording ? 'bg-red-500 rec-dot' : 'bg-amber-500'
           }`}
         />
-      )}
-      {!active && (
+      ) : (
         <Clock
-          size={14}
-          strokeWidth={1.5}
-          style={{ color: 'var(--color-text-tertiary)' }}
+          size={16}
+          strokeWidth={1.75}
+          style={{ color: '#94a3b8' }}
         />
       )}
       <span
         className="tabular-nums"
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: '22px',
-          fontWeight: 600,
+          fontSize: '24px',
+          fontWeight: 700,
           letterSpacing: '-0.03em',
           color: isRecording
-            ? 'var(--color-text-primary)'
+            ? '#ef4444'
             : isPaused
-            ? '#f59e0b'
-            : 'var(--color-text-tertiary)',
+            ? '#d97706'
+            : '#94a3b8',
         }}
       >
         {fmt(duration)}
