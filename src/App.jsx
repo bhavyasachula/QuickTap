@@ -12,21 +12,21 @@ const RS = { IDLE: 'idle', RECORDING: 'recording', PAUSED: 'paused', STOPPED: 's
 
 export default function App() {
   const [recordingState, setRecordingState] = useState(RS.IDLE);
-  const [recordingMode, setRecordingMode]   = useState('screen-audio');
-  const [isMuted, setIsMuted]               = useState(false);
-  const [duration, setDuration]             = useState(0);
-  const [recordedBlob, setRecordedBlob]     = useState(null);
-  const [recordedUrl, setRecordedUrl]       = useState(null);
-  const [error, setError]                   = useState(null);
+  const [recordingMode, setRecordingMode] = useState('screen-audio');
+  const [isMuted, setIsMuted] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [recordedBlob, setRecordedBlob] = useState(null);
+  const [recordedUrl, setRecordedUrl] = useState(null);
+  const [error, setError] = useState(null);
 
-  const streamRef       = useRef(null);
-  const mediaRecRef     = useRef(null);
-  const chunksRef       = useRef([]);
-  const timerRef        = useRef(null);
-  const previewRef      = useRef(null);
-  const audioCtxRef     = useRef(null);
-  const analyserRef     = useRef(null);
-  const micStreamRef    = useRef(null);
+  const streamRef = useRef(null);
+  const mediaRecRef = useRef(null);
+  const chunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const previewRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const analyserRef = useRef(null);
+  const micStreamRef = useRef(null);
 
   // ── Timer helpers ────────────────────────────────────────
   const clearTimer = useCallback(() => {
@@ -49,12 +49,12 @@ export default function App() {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
-      const ctx     = new AC();
+      const ctx = new AC();
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
       ctx.createMediaStreamSource(stream).connect(analyser);
-      audioCtxRef.current  = ctx;
-      analyserRef.current  = analyser;
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
     } catch (e) { console.warn('Analyser setup failed', e); }
   }, []);
 
@@ -91,10 +91,10 @@ export default function App() {
 
       let finalStream = stream;
       if (micStream) {
-        const ctx  = new AudioContext();
+        const ctx = new AudioContext();
         const dest = ctx.createMediaStreamDestination();
-        const da   = stream.getAudioTracks();
-        const ma   = micStream.getAudioTracks();
+        const da = stream.getAudioTracks();
+        const ma = micStream.getAudioTracks();
         if (da.length) ctx.createMediaStreamSource(new MediaStream(da)).connect(dest);
         if (ma.length) {
           ctx.createMediaStreamSource(new MediaStream(ma)).connect(dest);
@@ -118,7 +118,7 @@ export default function App() {
       recorder.ondataavailable = e => { if (e.data?.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const url  = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         setRecordedBlob(blob);
         setRecordedUrl(url);
         setRecordingState(RS.STOPPED);
@@ -183,7 +183,7 @@ export default function App() {
       if (e.code === 'Space' && recordingState === RS.IDLE) { e.preventDefault(); handleStart(); }
       if (e.key === 'p' || e.key === 'P') {
         if (recordingState === RS.RECORDING) handlePause();
-        if (recordingState === RS.PAUSED)    handleResume();
+        if (recordingState === RS.PAUSED) handleResume();
       }
       if ((e.key === 's' || e.key === 'S') && (recordingState === RS.RECORDING || recordingState === RS.PAUSED)) handleStop();
       if ((e.key === 'm' || e.key === 'M') && (recordingState === RS.RECORDING || recordingState === RS.PAUSED)) handleMute();
@@ -197,10 +197,10 @@ export default function App() {
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
   }, [clearTimer, stopAllTracks, recordedUrl]);
 
-  const isIdle      = recordingState === RS.IDLE;
+  const isIdle = recordingState === RS.IDLE;
   const isRecording = recordingState === RS.RECORDING;
-  const isPaused    = recordingState === RS.PAUSED;
-  const isStopped   = recordingState === RS.STOPPED;
+  const isPaused = recordingState === RS.PAUSED;
+  const isStopped = recordingState === RS.STOPPED;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#ffffff', color: '#0f172a' }}>
@@ -364,22 +364,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────────── */}
-      <footer
-        style={{
-          borderTop: '1px solid #e2e8f0',
-          padding: '16px 24px',
-          background: '#ffffff',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}
-      >
-        <span style={{ fontSize: '12px', color: '#64748b' }}>
-          QuickTap — Antigravity interactive wave screen recorder
-        </span>
-        <span style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
-          Three.js · WebRTC · MediaRecorder VP9
-        </span>
-      </footer>
     </div>
   );
 }
