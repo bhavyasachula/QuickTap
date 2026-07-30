@@ -1,18 +1,3 @@
-/**
- * App — root layout.
- *
- * Structure:
- *  <Header />   — sticky nav
- *  <section>    — hero: ParticleField behind, recorder UI in front (zIndex 10)
- *    <ParticleField />
- *    <div zIndex 10>
- *      headline + recorder widget
- *    </div>
- *  </section>
- *
- * Recorder widget is the hero — front and center, not buried.
- * No generic marketing copy, no emoji headings.
- */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import ParticleField from './components/ParticleField';
@@ -98,7 +83,7 @@ export default function App() {
           try {
             micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             micStreamRef.current = micStream;
-          } catch { /* optional */ }
+          } catch { /* optional mic */ }
         }
       }
 
@@ -155,7 +140,7 @@ export default function App() {
     } catch (err) {
       console.error(err);
       setError(err.name === 'NotAllowedError'
-        ? 'Permission denied — allow screen/camera access and try again.'
+        ? 'Permission denied — allow screen/camera access to proceed.'
         : err.message);
     }
   }, [recordingMode, setupAnalyser, startTimer, clearTimer, stopAllTracks]);
@@ -179,7 +164,7 @@ export default function App() {
   }, [clearTimer, stopAllTracks]);
 
   const handleMute = useCallback(() => {
-    const enable = isMuted; // toggling: if currently muted, we enable
+    const enable = isMuted;
     streamRef.current?.getAudioTracks().forEach(t => { t.enabled = enable; });
     micStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = enable; });
     setIsMuted(m => !m);
@@ -218,63 +203,62 @@ export default function App() {
   const isStopped   = recordingState === RS.STOPPED;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-surface-base)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#ffffff', color: '#0f172a' }}>
 
       <Header recordingState={recordingState} />
 
-      {/* ── Hero section: particle field behind, recorder in front ── */}
+      {/* ── Main Hero Section: Three.js Antigravity Wave Canvas ── */}
       <section style={{ position: 'relative', overflow: 'hidden', flex: 1 }}>
         <ParticleField />
 
-        {/* All recorder content sits at zIndex 10 */}
+        {/* Content on top (zIndex 10) */}
         <div style={{ position: 'relative', zIndex: 10 }}>
           <div
             style={{
               maxWidth: '860px',
               margin: '0 auto',
-              padding: '48px 24px 64px',
+              padding: '40px 24px 60px',
               display: 'flex',
               flexDirection: 'column',
               gap: '0',
             }}
           >
-            {/* ── Page heading — concise, no emoji, no gradient text ── */}
+            {/* ── Antigravity Heading ── */}
             {isIdle && (
-              <div style={{ marginBottom: '40px' }}>
+              <div style={{ marginBottom: '36px' }}>
                 <h1
                   style={{
-                    fontSize: 'clamp(28px, 4vw, 42px)',
+                    fontSize: 'clamp(32px, 4.5vw, 52px)',
                     fontWeight: 700,
                     letterSpacing: '-0.04em',
-                    color: 'var(--color-text-primary)',
-                    margin: '0 0 10px',
+                    color: '#0f172a',
+                    margin: '0 0 8px',
                     lineHeight: 1.1,
                   }}
                 >
                   Record your screen.{' '}
-                  <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400 }}>
-                    No extensions needed.
+                  <span style={{ color: '#64748b', fontWeight: 400 }}>
+                    Pure WebRTC performance.
                   </span>
                 </h1>
                 <p
                   style={{
-                    fontSize: '14px',
-                    color: 'var(--color-text-secondary)',
+                    fontSize: '15px',
+                    color: '#64748b',
                     margin: 0,
                     lineHeight: 1.6,
-                    maxWidth: '480px',
+                    maxWidth: '520px',
                   }}
                 >
-                  Browser-native WebRTC recording with vp9 encoding.
-                  Capture screen, window, or camera — processed entirely on-device.
+                  Capture display, active window, or webcam with crystal-clear VP9 encoding — completely on-device with zero server uploads.
                 </p>
               </div>
             )}
 
-            {/* ── Main recorder widget ─────────────────────────────── */}
+            {/* ── Recorder Card Widget ─────────────────────────────── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Row: source selector + timer */}
+              {/* Row: Source selector + Telemetry timer */}
               {!isStopped && (
                 <div
                   style={{
@@ -298,27 +282,28 @@ export default function App() {
                 </div>
               )}
 
-              {/* Error */}
+              {/* Error Banner */}
               {error && (
                 <div
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '10px 14px',
-                    background: 'rgba(239,68,68,0.07)',
-                    border: '1px solid rgba(239,68,68,0.2)',
-                    borderRadius: '6px',
+                    padding: '12px 16px',
+                    background: '#fef2f2',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '8px',
                     fontSize: '13px',
-                    color: '#f87171',
+                    color: '#dc2626',
+                    fontWeight: 500,
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style={{ flexShrink: 0 }}>
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style={{ flexShrink: 0 }}>
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9h2v4h-2V9zm0-2h2v2h-2V7z" clipRule="evenodd" />
                   </svg>
                   {error}
                 </div>
               )}
 
-              {/* Video preview or post-recording */}
+              {/* Video Preview or Post-Recording Player */}
               {!isStopped ? (
                 <>
                   <VideoPreview
@@ -343,7 +328,7 @@ export default function App() {
                 />
               )}
 
-              {/* Control bar — the signature glassmorphism element */}
+              {/* Control Bar */}
               {!isStopped && (
                 <ControlBar
                   recordingState={recordingState}
@@ -357,17 +342,17 @@ export default function App() {
                 />
               )}
 
-              {/* Shortcut footer — visible only when idle */}
+              {/* Shortcuts Footer */}
               {isIdle && (
                 <div
                   style={{
                     marginTop: '4px',
                     display: 'flex', gap: '16px', flexWrap: 'wrap',
-                    fontSize: '11px', color: 'var(--color-text-tertiary)',
+                    fontSize: '12px', color: '#94a3b8', fontWeight: 500,
                   }}
                 >
-                  <span>During recording:</span>
-                  {[['P', 'Pause'], ['S', 'Stop'], ['M', 'Mute']].map(([k, l]) => (
+                  <span>Keyboard shortcuts:</span>
+                  {[['Space', 'Start'], ['P', 'Pause/Resume'], ['S', 'Stop'], ['M', 'Mute']].map(([k, l]) => (
                     <span key={k} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <kbd>{k}</kbd> {l}
                     </span>
@@ -382,16 +367,17 @@ export default function App() {
       {/* ── Footer ────────────────────────────────────────────── */}
       <footer
         style={{
-          borderTop: '1px solid var(--color-border-subtle)',
-          padding: '14px 24px',
+          borderTop: '1px solid #e2e8f0',
+          padding: '16px 24px',
+          background: '#ffffff',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}
       >
-        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-          QuickTap — runs entirely in your browser
+        <span style={{ fontSize: '12px', color: '#64748b' }}>
+          QuickTap — Antigravity interactive wave screen recorder
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-          WebRTC · MediaRecorder · vp9
+        <span style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
+          Three.js · WebRTC · MediaRecorder VP9
         </span>
       </footer>
     </div>
