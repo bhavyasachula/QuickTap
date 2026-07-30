@@ -1,8 +1,3 @@
-/**
- * PostRecording — minimal card for reviewing the recording.
- * Clean surface, no stacked shadows. One blue accent on the download button.
- * Speed selector: flat inline toggle. Filename: inline editable text.
- */
 import { useState, useRef, useEffect } from 'react';
 import { Download, Copy, Trash2, Play, Pause, CheckCircle2, RotateCcw } from 'lucide-react';
 
@@ -17,7 +12,7 @@ function fmtFull(s) {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':');
+  return [h, m, sec].map((v) => String(v).padStart(2, '0')).join(':');
 }
 
 export default function PostRecording({ recordedUrl, recordedBlob, duration, onDiscard }) {
@@ -51,7 +46,7 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
     playing ? el.pause() : el.play();
   };
 
-  const seek = e => {
+  const seek = (e) => {
     const el = videoRef.current;
     if (!el || !vidDur) return;
     const r   = e.currentTarget.getBoundingClientRect();
@@ -83,40 +78,41 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
       <div
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 14px',
-          background: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-border-subtle)',
-          borderRadius: '6px',
+          padding: '12px 16px',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <CheckCircle2 size={14} strokeWidth={2} style={{ color: '#4ade80', flexShrink: 0 }} />
-          <span style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 500 }}>
-            Recording saved
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CheckCircle2 size={16} strokeWidth={2} style={{ color: '#16a34a', flexShrink: 0 }} />
+          <span style={{ color: '#0f172a', fontSize: '14px', fontWeight: 600 }}>
+            Recording ready
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '18px' }}>
           {[
             ['Duration', fmtFull(duration)],
             ['Size', `${sizeMB} MB`],
-            ['Codec', 'VP9/WebM'],
+            ['Format', 'VP9 WebM'],
           ].map(([k, v]) => (
             <div key={k} style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', letterSpacing: '0.04em' }}>{k}</div>
-              <div style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', fontWeight: 500 }}>{v}</div>
+              <div style={{ fontSize: '10px', color: '#94a3b8', letterSpacing: '0.04em', fontWeight: 600 }}>{k}</div>
+              <div style={{ fontSize: '13px', fontFamily: 'var(--font-mono)', color: '#334155', fontWeight: 600 }}>{v}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Player ──────────────────────────────────── */}
+      {/* ── Video Player ─────────────────────────────── */}
       <div
         style={{
           position: 'relative',
-          background: '#000',
-          border: '1px solid var(--color-border-default)',
-          borderRadius: '8px',
+          background: '#0f172a',
+          border: '1px solid #cbd5e1',
+          borderRadius: '10px',
           overflow: 'hidden',
+          boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.1)',
         }}
       >
         <video
@@ -125,7 +121,7 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
           onClick={toggle}
         />
 
-        {/* Play/pause overlay — appears on hover */}
+        {/* Overlay Play button */}
         <div
           onClick={toggle}
           style={{
@@ -133,46 +129,44 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: playing ? 0 : 1, transition: 'opacity 0.15s',
           }}
-          className="group"
-          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-          onMouseLeave={e => e.currentTarget.style.opacity = playing ? '0' : '1'}
         >
           <div
             style={{
-              width: '44px', height: '44px', borderRadius: '50%',
-              background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.15)',
+              width: '48px', height: '48px', borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.9)', border: '1px solid #cbd5e1',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             }}
           >
-            {playing
-              ? <Pause size={18} style={{ color: '#fff' }} />
-              : <Play  size={18} style={{ color: '#fff', marginLeft: '2px' }} />
-            }
+            {playing ? (
+              <Pause size={20} style={{ color: '#0f172a' }} />
+            ) : (
+              <Play size={20} style={{ color: '#0f172a', marginLeft: '2px' }} />
+            )}
           </div>
         </div>
 
-        {/* Bottom control strip */}
+        {/* Bottom controls */}
         <div
           style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
             background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)',
-            padding: '24px 12px 10px',
+            padding: '24px 14px 12px',
           }}
         >
           {/* Progress bar */}
           <div
             onClick={seek}
             style={{
-              height: '3px', background: 'rgba(255,255,255,0.15)',
-              borderRadius: '2px', cursor: 'pointer', marginBottom: '8px',
-              position: 'relative', overflow: 'visible',
+              height: '4px', background: 'rgba(255,255,255,0.2)',
+              borderRadius: '2px', cursor: 'pointer', marginBottom: '10px',
+              position: 'relative',
             }}
           >
             <div
               style={{
                 height: '100%', width: `${progress}%`,
                 background: '#2563eb', borderRadius: '2px',
-                transition: 'width 0.1s linear',
                 position: 'relative',
               }}
             >
@@ -180,32 +174,32 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
                 style={{
                   position: 'absolute', right: '-4px', top: '50%',
                   transform: 'translateY(-50%)',
-                  width: '8px', height: '8px', borderRadius: '50%',
-                  background: '#fff',
+                  width: '10px', height: '10px', borderRadius: '50%',
+                  background: '#ffffff',
                 }}
               />
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button onClick={toggle} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#fff', display: 'flex' }}>
-              {playing ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: '1px' }} />}
+              {playing ? <Pause size={15} /> : <Play size={15} style={{ marginLeft: '1px' }} />}
             </button>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>
               {fmtMM(current)} / {fmtMM(vidDur)}
             </span>
-            {/* Speed */}
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '2px' }}>
-              {SPEEDS.map(s => (
+            {/* Speed selector */}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+              {SPEEDS.map((s) => (
                 <button
                   key={s}
                   onClick={() => setSpeed(s)}
                   style={{
-                    background: speed === s ? 'rgba(37,99,235,0.75)' : 'transparent',
-                    border: '1px solid ' + (speed === s ? '#2563eb' : 'transparent'),
-                    color: speed === s ? '#fff' : 'rgba(255,255,255,0.45)',
-                    borderRadius: '3px', fontSize: '10px', fontWeight: 500,
-                    padding: '2px 5px', cursor: 'pointer',
+                    background: speed === s ? '#ffffff' : 'rgba(255,255,255,0.15)',
+                    border: '1px solid ' + (speed === s ? '#ffffff' : 'transparent'),
+                    color: speed === s ? '#0f172a' : 'rgba(255,255,255,0.7)',
+                    borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                    padding: '2px 7px', cursor: 'pointer',
                     transition: 'all 0.1s',
                   }}
                 >
@@ -217,47 +211,48 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
         </div>
       </div>
 
-      {/* ── Actions row ──────────────────────────────── */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* ── Actions Row ──────────────────────────────── */}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
         {/* Filename input */}
         <div
           style={{
-            flex: '1 1 200px', display: 'flex', alignItems: 'center', gap: '6px',
-            background: 'var(--color-surface-raised)',
-            border: '1px solid var(--color-border-default)',
-            borderRadius: '5px', padding: '6px 10px',
+            flex: '1 1 220px', display: 'flex', alignItems: 'center', gap: '6px',
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px', padding: '7px 12px',
           }}
         >
-          <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>File:</span>
+          <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500, whiteSpace: 'nowrap' }}>File:</span>
           <input
             type="text"
             value={filename}
-            onChange={e => setFilename(e.target.value)}
+            onChange={(e) => setFilename(e.target.value)}
             style={{
               flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              fontSize: '12px', color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)',
+              fontSize: '13px', color: '#0f172a', fontFamily: 'var(--font-mono)', fontWeight: 500,
             }}
             placeholder="filename"
           />
-          <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>.webm</span>
+          <span style={{ fontSize: '12px', color: '#94a3b8' }}>.webm</span>
         </div>
 
-        {/* Download */}
+        {/* Download Button */}
         <button
           onClick={download}
           style={{
             display: 'flex', alignItems: 'center', gap: '6px',
-            background: '#2563eb', border: '1px solid #1d4ed8',
-            color: '#fff', borderRadius: '5px',
-            fontSize: '12px', fontWeight: 500, padding: '7px 14px',
-            cursor: 'pointer', transition: 'background 0.12s ease, transform 0.1s ease',
+            background: '#0f172a', border: '1px solid #0f172a',
+            color: '#ffffff', borderRadius: '6px',
+            fontSize: '13px', fontWeight: 600, padding: '8px 16px',
+            cursor: 'pointer', transition: 'all 0.12s ease',
+            boxShadow: '0 2px 4px rgba(15, 23, 42, 0.1)',
             flexShrink: 0,
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#1e293b'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#0f172a'; }}
         >
-          <Download size={13} strokeWidth={2} />
-          Download
+          <Download size={15} strokeWidth={2} />
+          Download .webm
         </button>
 
         {/* Copy URL */}
@@ -265,15 +260,15 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
           onClick={copyUrl}
           style={{
             display: 'flex', alignItems: 'center', gap: '6px',
-            background: 'var(--color-surface-float)',
-            border: `1px solid ${copied ? 'rgba(74,222,128,0.4)' : 'var(--color-border-default)'}`,
-            color: copied ? '#4ade80' : 'var(--color-text-secondary)',
-            borderRadius: '5px', fontSize: '12px', fontWeight: 500, padding: '7px 12px',
+            background: '#ffffff',
+            border: `1px solid ${copied ? '#16a34a' : '#cbd5e1'}`,
+            color: copied ? '#16a34a' : '#334155',
+            borderRadius: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 14px',
             cursor: 'pointer', transition: 'all 0.12s ease',
             flexShrink: 0,
           }}
         >
-          {copied ? <CheckCircle2 size={13} /> : <Copy size={13} strokeWidth={1.75} />}
+          {copied ? <CheckCircle2 size={15} /> : <Copy size={15} strokeWidth={2} />}
           {copied ? 'Copied' : 'Copy URL'}
         </button>
 
@@ -283,17 +278,17 @@ export default function PostRecording({ recordedUrl, recordedBlob, duration, onD
           title="Discard and start over"
           style={{
             display: 'flex', alignItems: 'center', gap: '6px',
-            background: 'transparent',
-            border: '1px solid var(--color-border-default)',
-            color: 'var(--color-text-tertiary)',
-            borderRadius: '5px', fontSize: '12px', fontWeight: 500, padding: '7px 10px',
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            color: '#64748b',
+            borderRadius: '6px', fontSize: '13px', fontWeight: 500, padding: '8px 12px',
             cursor: 'pointer', transition: 'all 0.12s ease',
             flexShrink: 0,
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)'; e.currentTarget.style.borderColor = 'var(--color-border-default)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#dc2626'; e.currentTarget.style.borderColor = '#fca5a5'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
         >
-          <RotateCcw size={13} strokeWidth={1.75} />
+          <RotateCcw size={15} strokeWidth={2} />
           New recording
         </button>
       </div>
