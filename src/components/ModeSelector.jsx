@@ -1,7 +1,3 @@
-/**
- * ModeSelector — flat segmented control.
- * No pill-bubble styling, no neon. Feels like a native toolbar segment.
- */
 import { Monitor, MonitorOff, Camera } from 'lucide-react';
 
 const MODES = [
@@ -12,9 +8,9 @@ const MODES = [
 
 export default function ModeSelector({ mode, onChange, disabled }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <span
-        style={{ color: 'var(--color-text-tertiary)', fontSize: '10px', letterSpacing: '0.1em' }}
+        style={{ color: '#94a3b8', fontSize: '10px', letterSpacing: '0.1em' }}
         className="font-semibold uppercase"
       >
         Source
@@ -23,12 +19,12 @@ export default function ModeSelector({ mode, onChange, disabled }) {
       {/* Segmented track */}
       <div
         style={{
-          background: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-border-default)',
-          borderRadius: '6px',
-          padding: '2px',
+          background: '#f1f5f9',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '3px',
           display: 'flex',
-          gap: '1px',
+          gap: '2px',
           opacity: disabled ? 0.45 : 1,
         }}
       >
@@ -41,25 +37,26 @@ export default function ModeSelector({ mode, onChange, disabled }) {
               disabled={disabled}
               title={label}
               style={{
-                background: active ? 'var(--color-surface-float)' : 'transparent',
+                background: active ? '#ffffff' : 'transparent',
                 border: active
-                  ? '1px solid var(--color-border-strong)'
+                  ? '1px solid #cbd5e1'
                   : '1px solid transparent',
-                color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                borderRadius: '4px',
+                boxShadow: active ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
+                color: active ? '#0f172a' : '#64748b',
+                borderRadius: '6px',
                 fontSize: '12px',
-                fontWeight: active ? 500 : 400,
-                padding: '5px 10px',
+                fontWeight: active ? 600 : 500,
+                padding: '6px 12px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '6px',
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 transition: 'all 0.12s ease',
                 userSelect: 'none',
                 whiteSpace: 'nowrap',
               }}
             >
-              <Icon size={13} strokeWidth={1.75} />
+              <Icon size={14} strokeWidth={2} />
               {label}
             </button>
           );
