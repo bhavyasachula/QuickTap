@@ -1,110 +1,84 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 
-/* ── Design tokens ──────────────────────────────────────── */
+/* ── Antigravity Light Theme Tokens ───────────────────── */
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', monospace;
 
-  /* Surface scale */
-  --color-surface-base:   #0d0f14;
-  --color-surface-raised: #13151c;
-  --color-surface-float:  #1a1d26;
+  /* Clean Light Surfaces */
+  --color-surface-base:   #ffffff;
+  --color-surface-raised: #f8fafc;
+  --color-surface-float:  #f1f5f9;
 
   /* Borders */
-  --color-border-default: #252830;
-  --color-border-subtle:  #1e2028;
-  --color-border-strong:  #363944;
+  --color-border-default: #e2e8f0;
+  --color-border-subtle:  #f1f5f9;
+  --color-border-strong:  #cbd5e1;
 
   /* Text */
-  --color-text-primary:   #f0f1f5;
-  --color-text-secondary: #7c7f8e;
-  --color-text-tertiary:  #4a4d5a;
+  --color-text-primary:   #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary:  #94a3b8;
 
-  /* Accent — used surgically in 1-2 places */
-  --color-accent: #2563eb;
-  --color-accent-dim: #1d4ed8;
+  /* Accent */
+  --color-accent: #0f172a;
+  --color-accent-blue: #2563eb;
 
-  /* State colors */
+  /* Recording states */
   --color-rec:    #ef4444;
-  --color-rec-bg: rgba(239,68,68,0.08);
   --color-pause:  #f59e0b;
 }
 
 /* ── Base reset ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { height: 100%; }
-
-body {
-  font-family: var(--font-sans);
-  background-color: var(--color-surface-base);
-  color: var(--color-text-primary);
-  margin: 0;
+html, body {
   height: 100%;
+  margin: 0;
+  background-color: #ffffff;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 /* ── Scrollbar ───────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
-/* ── Rec pulse — the ONE signature animation ────────────── */
+/* ── Rec pulse animation ────────────────────────────────── */
 @keyframes rec-pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.35; }
 }
 .rec-dot { animation: rec-pulse 1.4s ease-in-out infinite; }
 
-/* ── Fade-slide in ──────────────────────────────────────── */
+/* ── Fade-up ────────────────────────────────────────────── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .fade-up { animation: fade-up 0.3s ease forwards; }
 
-/* ── Glassmorphism panel — ONE element only ─────────────── */
+/* ── Frosted panel ──────────────────────────────────────── */
 .glass-panel {
-  background: rgba(19, 21, 28, 0.72);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.07);
-}
-
-/* ── Focus ring ─────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
 }
 
 /* ── Kbd ────────────────────────────────────────────────── */
 kbd {
   font-family: var(--font-mono);
   font-size: 0.65rem;
-  padding: 1px 5px;
-  background: var(--color-surface-float);
-  border: 1px solid var(--color-border-strong);
+  padding: 1.5px 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
   border-radius: 4px;
-  color: var(--color-text-tertiary);
-  letter-spacing: 0.02em;
-}
-
-/* ── Progress bar for post-recording ───────────────────── */
-.seek-bar { cursor: pointer; }
-.seek-bar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: var(--color-text-primary);
-  cursor: pointer;
-  margin-top: -4px;
-}
-.seek-bar::-webkit-slider-runnable-track {
-  height: 4px;
-  background: var(--color-border-strong);
-  border-radius: 2px;
+  color: #475569;
+  font-weight: 500;
 }

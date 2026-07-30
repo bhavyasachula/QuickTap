@@ -1,11 +1,7 @@
-/**
- * AudioVisualizer — minimal 32-bar canvas meter.
- * Tight, dense, no glow. Colors: blue peaks, gray flat, white clip.
- */
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 
-const BAR_COUNT = 32;
+const BAR_COUNT = 36;
 
 export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
   const canvasRef = useRef(null);
@@ -32,10 +28,10 @@ export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
       if (!active) {
         // Flat idle bars
         for (let i = 0; i < BAR_COUNT; i++) {
-          ctx.fillStyle = 'rgba(255,255,255,0.05)';
+          ctx.fillStyle = '#cbd5e1';
           const x = i * slot + gapW / 2;
           ctx.beginPath();
-          ctx.roundRect(x, H / 2 - 1.5, barW, 3, 1);
+          ctx.roundRect(x, H / 2 - 1.5, barW, 3, 1.5);
           ctx.fill();
         }
         setLevel(0);
@@ -58,15 +54,14 @@ export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
         const x    = i * slot + gapW / 2;
         const y    = (H - barH) / 2;
 
-        // Color by level: blue → gray → white
         let color;
-        if (pct < 0.5)       color = `rgba(37,99,235,${0.4 + pct * 0.9})`;
-        else if (pct < 0.85) color = `rgba(148,163,184,${0.6 + pct * 0.4})`;
-        else                 color = `rgba(241,245,249,${0.85 + pct * 0.15})`;
+        if (pct < 0.5)       color = `rgba(37, 99, 235, ${0.6 + pct * 0.8})`; // Indigo/Blue
+        else if (pct < 0.85) color = `rgba(147, 51, 234, ${0.7 + pct * 0.3})`; // Purple
+        else                 color = `rgba(225, 29, 72, ${0.85 + pct * 0.15})`; // Rose/Red
 
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.roundRect(x, y, barW, barH, 1.5);
+        ctx.roundRect(x, y, barW, barH, 2);
         ctx.fill();
       }
 
@@ -80,19 +75,20 @@ export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
   return (
     <div
       style={{
-        display: 'flex', alignItems: 'center', gap: '10px',
-        background: 'var(--color-surface-raised)',
-        border: '1px solid var(--color-border-subtle)',
-        borderRadius: '6px',
-        padding: '8px 12px',
+        display: 'flex', alignItems: 'center', gap: '12px',
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        padding: '8px 14px',
       }}
     >
       {/* Icon */}
       <div style={{ flexShrink: 0 }}>
-        {isMuted
-          ? <MicOff size={13} strokeWidth={1.75} style={{ color: '#f87171' }} />
-          : <Mic size={13} strokeWidth={1.75} style={{ color: 'var(--color-text-secondary)' }} />
-        }
+        {isMuted ? (
+          <MicOff size={15} strokeWidth={2} style={{ color: '#ef4444' }} />
+        ) : (
+          <Mic size={15} strokeWidth={2} style={{ color: '#475569' }} />
+        )}
       </div>
 
       {/* Bars */}
@@ -103,7 +99,7 @@ export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
             style={{
               position: 'absolute', inset: 0,
               display: 'flex', alignItems: 'center',
-              fontSize: '11px', color: 'var(--color-text-tertiary)',
+              fontSize: '12px', color: '#94a3b8', fontWeight: 500,
             }}
           >
             Microphone muted
@@ -116,10 +112,10 @@ export default function AudioVisualizer({ analyserRef, isRecording, isMuted }) {
         <div
           style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            fontWeight: 600,
-            color: level > 75 ? '#f87171' : level > 45 ? '#fbbf24' : 'var(--color-text-secondary)',
-            minWidth: '28px',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: level > 75 ? '#dc2626' : level > 45 ? '#d97706' : '#2563eb',
+            minWidth: '32px',
           }}
         >
           {level}%
